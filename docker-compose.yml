@@ -6,7 +6,7 @@ services:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "55434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD:-evoai_redis_pass} --appendonly yes"]
     ports:
-      - "6379:6379"
+      - "56381:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -38,8 +38,23 @@ services:
     image: mailhog/mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "11025:1025"
+      - "18025:8025"
+
+  # Message broker for EvoFlow. Its global BrokerModule connects on boot even in
+  # api/direct mode (which writes straight to ClickHouse), so a broker must be
+  # reachable. RabbitMQ is the light option the adapter supports (vs Kafka).
+  rabbitmq:
+    image: rabbitmq:3-alpine
+    restart: unless-stopped
+    ports:
+      - "55672:5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   # ---------------------------------------------------------------------------
   # Auth Service (Ruby / Rails) — Port 3001
@@ -50,7 +65,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "3011:3001"
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
@@ -104,7 +119,7 @@ services:
         RAILS_SERVE_STATIC_FILES: "false"
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3010:3000"
     env_file: .env
     environment:
       RAILS_ENV: ${RAILS_ENV:-development}
@@ -180,12 +195,13 @@ services:
   # Core Service (Go / Gin) — Port 5555
   # ---------------------------------------------------------------------------
   evo-core:
-    build:
-      context: ./evo-ai-core-service-community
-      dockerfile: Dockerfile
+    # NOTE: the Community Dockerfile build is broken — go.mod has a
+    # `replace ... => ../evo-crm-enterprise/...` that fails `go mod download`
+    # in a Community-only checkout. Reuse the already-built dev image instead.
+    image: evo-ai-core-service:dev
     restart: unless-stopped
     ports:
-      - "5555:5555"
+      - "5565:5555"
     env_file: .env
     environment:
       DB_HOST: postgres
@@ -217,7 +233,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8011:8000"
     env_file: .env
     environment:
       POSTGRES_CONNECTION_STRING: postgresql://${POSTGRES_USERNAME:-postgres}:${POSTGRES_PASSWORD:-evoai_dev_password}@postgres:5432/${POSTGRES_DATABASE:-evo_community}
@@ -252,7 +268,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8092:8080"
     env_file: .env
     environment:
       LISTEN_ADDR: 0.0.0.0:8080
@@ -270,6 +286,99 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # ClickHouse (analytics store for EvoFlow)
+  # ---------------------------------------------------------------------------
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    restart: unless-stopped
+    ports:
+      - "18123:8123"
+      - "19000:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: default
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "default", "--password", "password", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # EvoFlow (NestJS — journeys/campaigns) — Port 3334
+  # Boots in api + QUEUE_MODE=direct + WRITE_MODE=ch-sync (no Kafka/Temporal):
+  # the API serves event ingestion + reads and writes straight to ClickHouse.
+  # Uses a DEDICATED Postgres DB (evo_campaign) — it reads the CRM over HTTP,
+  # not via the shared evo_community schema.
+  # ---------------------------------------------------------------------------
+  evo-flow:
+    build:
+      context: ./evo-flow-community
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3334:3334"
+    # No official db:create step — create the dedicated DB if missing, run the
+    # TypeORM migrations (idempotent), then boot the app.
+    command:
+      - sh
+      - -c
+      - |
+        node -e 'const{Client}=require("pg");const db=process.env.POSTGRES_DB_DATABASE;const c=new Client({host:process.env.POSTGRES_DB_HOST,port:+(process.env.POSTGRES_DB_PORT||5432),user:process.env.POSTGRES_DB_USERNAME,password:process.env.POSTGRES_DB_PASSWORD,database:"postgres"});c.connect().then(()=>c.query("CREATE DATABASE "+db)).then(()=>console.log("[init] created "+db)).catch(e=>console.log("[init] "+(e.code==="42P04"?"db already exists":e.message))).finally(()=>c.end());'
+        node_modules/.bin/typeorm migration:run -d dist/database/ormconfig.js || echo "[init] migration:run failed (continuing)"
+        exec node dist/main.js
+    environment:
+      NODE_ENV: development
+      RUN_MODE: api
+      QUEUE_MODE: direct
+      STORAGE_MODE: clickhouse
+      WRITE_MODE: ch-sync
+      PORT: "3334"
+      # The global BrokerModule still boots in api/direct mode and connects, so a
+      # broker is required even though ingestion writes straight to ClickHouse.
+      BROKER_TYPE: rabbitmq
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      AUTH_APIKEY_INTEGRATION_LOCAL: ${AUTH_APIKEY_INTEGRATION_LOCAL:-evoflow-dev-key}
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AUTH_VALIDATE_TOKEN_ENDPOINT: /api/v1/auth/validate
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_DATABASE: evo_campaign
+      CLICKHOUSE_USERNAME: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_TABLE: contact_events
+      # Redis (token/session cache + health). Without these the app falls back to
+      # 127.0.0.1 and the auth client can fail → spurious 401s.
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-evoai_redis_pass}
+      REDIS_DB: "4"
+      POSTGRES_DB_HOST: postgres
+      POSTGRES_DB_PORT: "5432"
+      POSTGRES_DB_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_DB_PASSWORD: ${POSTGRES_PASSWORD:-evoai_dev_password}
+      POSTGRES_DB_DATABASE: evo_campaign
+      EVOAI_CRM_BASE_URL: http://evo-crm:3000
+      EVOAI_CRM_API_TOKEN: ${EVOAI_CRM_API_TOKEN:-6e10e689-58ce-4416-bf0d-f5818bf2dcf8}
+      LOG_LEVEL: log
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   # ---------------------------------------------------------------------------
   # Frontend (React / Vite / Nginx) — Port 5173
@@ -311,3 +420,4 @@ volumes:
   crm_node_modules:
   crm_cache:
   processor_logs:
+  clickhouse_data:

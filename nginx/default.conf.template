@@ -292,7 +292,9 @@ server {
     # =============================================================================
 
     # Chat endpoints (including WebSocket) — needs longer timeout
-    location ~ ^/api/v1/chat {
+    # Anchored to the `chat` path segment so it does NOT swallow sibling CRM
+    # routes like /api/v1/chat_pages (which must fall through to $crm_service).
+    location ~ ^/api/v1/chat(/|$) {
         proxy_pass $processor_service$request_uri;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
