@@ -19,7 +19,26 @@ several) services to a PR image while the rest run `:develop`.
 PR images (`:pr-<N>`) are published by each service's CI on `pull_request`
 (see the service repo's `.github/workflows/docker-publish.yml`).
 
-## Usage
+## Quick use — `review.sh`
+
+Pass one or more PR URLs; each pins its service to `:pr-<N>`, all other services
+run `:develop`, then the stack comes up:
+
+```sh
+# one PR:
+./internal/review/review.sh https://github.com/evolution-foundation/evo-ai-crm-community/pull/140
+# a card with several PRs — just pass all the links:
+./internal/review/review.sh <crm-pr-url> <auth-pr-url>
+# dry-run (prints what it would do, boots nothing):
+./internal/review/review.sh -n <pr-url>
+# baseline (no args → every service on :develop):
+./internal/review/review.sh
+```
+
+`review.sh` is the intended entry point. The raw `docker compose` commands below
+are the plumbing it drives.
+
+## Usage (plumbing)
 
 Run from the repo root:
 
