@@ -32,7 +32,7 @@ if [ $EXIT_CODE -ne 0 ]; then
   exit 1
 fi
 
-if [[ ! "$OUTPUT" =~ "docker exec -i evo-crm bundle exec rails r" ]]; then
+if [[ ! "$OUTPUT" =~ "docker exec -i evo-auth bundle exec rails r" ]]; then
   echo "❌ Test Failed: Output does not contain expected docker exec rails runner command. Output was: $OUTPUT"
   exit 1
 fi

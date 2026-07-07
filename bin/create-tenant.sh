@@ -76,7 +76,7 @@ EOF
 )
 
 if [ "$DRY_RUN" -eq 1 ]; then
-  echo "Dry run: would run: docker exec -i evo-crm bundle exec rails r -"
+  echo "Dry run: would run: docker exec -i evo-auth bundle exec rails r -"
   echo "--- Ruby Script to execute ---"
   echo "$RUBY_SCRIPT"
   echo "------------------------------"
@@ -84,8 +84,8 @@ if [ "$DRY_RUN" -eq 1 ]; then
 fi
 
 # Execution
-echo "Executing provisioning script inside evo-crm container..."
-echo "$RUBY_SCRIPT" | docker exec -i evo-crm bundle exec rails r -
+echo "Executing provisioning script inside evo-auth container..."
+echo "$RUBY_SCRIPT" | docker exec -i evo-auth bundle exec rails r -
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
