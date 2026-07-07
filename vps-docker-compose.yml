@@ -1,0 +1,327 @@
+version: '3.8'
+
+services:
+  evocrm_gateway:
+    image: evoapicloud/evo-crm-gateway:latest
+    build: ./nginx
+    container_name: evocrm_gateway
+    restart: unless-stopped
+    ports:
+      - "3030:3030"
+    environment:
+      - AUTH_UPSTREAM=evo-auth:3001
+      - CRM_UPSTREAM=evo-crm:3000
+      - CORE_UPSTREAM=evocrm_core:5555
+      - PROCESSOR_UPSTREAM=evocrm_processor:8000
+      - BOT_RUNTIME_UPSTREAM=evocrm_bot_runtime:8080
+      - FLOW_UPSTREAM=evo-flow:3000
+    networks:
+      - evolution_network
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.evocrm_gateway.rule=Host(`api.bodyharmony.tech`)"
+      - "traefik.http.routers.evocrm_gateway.entrypoints=websecure"
+      - "traefik.http.routers.evocrm_gateway.tls.certresolver=letsencrypt"
+      - "traefik.http.services.evocrm_gateway.loadbalancer.server.port=3030"
+
+  evo-auth:
+    image: evoapicloud/evo-auth-service-community:latest
+    container_name: evo-auth
+    command: ["bash", "-c", "bundle exec rails db:create && bundle exec rails db:migrate && bundle exec rails server -p 3001 -b 0.0.0.0"]
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      JWT_SECRET_KEY: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      DOORKEEPER_JWT_SECRET_KEY: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      EVOAI_CRM_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: EvoAdminVPS2026!
+      POSTGRES_DATABASE: evocrm
+      POSTGRES_SSLMODE: disable
+      REDIS_URL: redis://redis:6379/1
+      FRONTEND_URL: https://crm.bodyharmony.tech
+      BACKEND_URL: https://api.bodyharmony.tech
+      CORS_ORIGINS: "https://crm.bodyharmony.tech,https://api.bodyharmony.tech"
+      OAUTH_TOKEN_EXPIRES_IN: 28800
+      ACTIVE_STORAGE_SERVICE: local
+      ACTIVE_STORAGE_URL: https://api.bodyharmony.tech
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - evoauth_storage:/app/storage
+    networks:
+      - evolution_network
+
+  evo-crm:
+    image: evoapicloud/evo-ai-crm-community:latest
+    container_name: evo-crm
+    command: sh -c "until wget -qO- http://evo-auth:3001/health >/dev/null 2>&1; do echo 'Waiting for auth...'; sleep 5; done; bundle exec rails db:migrate 2>&1 || echo 'Migration had errors, continuing...'; bundle exec rails s -p 3000 -b 0.0.0.0"
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      JWT_SECRET_KEY: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      EVOAI_CRM_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: EvoAdminVPS2026!
+      POSTGRES_DATABASE: evocrm
+      POSTGRES_SSLMODE: disable
+      REDIS_URL: redis://redis:6379/1
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AI_CORE_SERVICE_URL: http://evocrm_core:5555
+      BACKEND_URL: https://api.bodyharmony.tech
+      FRONTEND_URL: https://crm.bodyharmony.tech
+      CORS_ORIGINS: "https://crm.bodyharmony.tech,https://api.bodyharmony.tech"
+      BOT_RUNTIME_URL: http://evocrm_bot_runtime:8080
+      BOT_RUNTIME_SECRET: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      BOT_RUNTIME_POSTBACK_BASE_URL: http://evo-crm:3000
+      ACTIVE_STORAGE_SERVICE: local
+      ACTIVE_STORAGE_URL: https://api.bodyharmony.tech
+      ENABLE_ACCOUNT_SIGNUP: "true"
+      AUTH_APIKEY_INTEGRATION_LOCAL: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      EVO_FLOW_ALLOW_INSECURE: "true"
+      EVO_FLOW_API_URL: "http://evo-flow:3000/api/v1"
+    depends_on:
+      - postgres
+      - redis
+      - evo-auth
+    volumes:
+      - evocrm_storage:/app/storage
+    networks:
+      - evolution_network
+
+  evo-crm-sidekiq:
+    image: evoapicloud/evo-ai-crm-community:latest
+    container_name: evo-crm-sidekiq
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      JWT_SECRET_KEY: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      EVOAI_CRM_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: EvoAdminVPS2026!
+      POSTGRES_DATABASE: evocrm
+      POSTGRES_SSLMODE: disable
+      REDIS_URL: redis://redis:6379/1
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AI_CORE_SERVICE_URL: http://evocrm_core:5555
+      BACKEND_URL: https://api.bodyharmony.tech
+      FRONTEND_URL: https://crm.bodyharmony.tech
+      CORS_ORIGINS: "https://crm.bodyharmony.tech,https://api.bodyharmony.tech"
+      BOT_RUNTIME_URL: http://evocrm_bot_runtime:8080
+      BOT_RUNTIME_SECRET: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      BOT_RUNTIME_POSTBACK_BASE_URL: http://evo-crm:3000
+      ACTIVE_STORAGE_SERVICE: local
+      ACTIVE_STORAGE_URL: https://api.bodyharmony.tech
+      AUTH_APIKEY_INTEGRATION_LOCAL: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      EVO_FLOW_ALLOW_INSECURE: "true"
+      EVO_FLOW_API_URL: "http://evo-flow:3000/api/v1"
+    depends_on:
+      - postgres
+      - redis
+      - evo-crm
+    volumes:
+      - evocrm_storage:/app/storage
+    networks:
+      - evolution_network
+
+  evocrm_core:
+    image: evoapicloud/evo-ai-core-service-community:latest
+    container_name: evocrm_core
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: EvoAdminVPS2026!
+      DB_NAME: evocrm
+      DB_SSLMODE: disable
+      PORT: 5555
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      JWT_SECRET_KEY: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      JWT_ALGORITHM: HS256
+      ENCRYPTION_KEY: "xMHsa2xDjswjV8t-nfBjTYS7zpbwqeUCjyK4C9RLm-g="
+      EVOLUTION_BASE_URL: http://evo-crm:3000
+      EVO_AUTH_BASE_URL: http://evo-auth:3001
+      AI_PROCESSOR_URL: http://evocrm_processor:8000
+      AI_PROCESSOR_VERSION: v1
+    depends_on:
+      - postgres
+    networks:
+      - evolution_network
+
+  evocrm_processor:
+    image: evoapicloud/evo-ai-processor-community:latest
+    container_name: evocrm_processor
+    command: sh -c "alembic upgrade head 2>&1 || echo 'Alembic migration had errors, continuing...'; python -m scripts.run_seeders; uvicorn src.main:app --host $$HOST --port $$PORT"
+    restart: unless-stopped
+    environment:
+      POSTGRES_CONNECTION_STRING: postgresql://postgres:EvoAdminVPS2026!@postgres:5432/evocrm
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+      HOST: 0.0.0.0
+      PORT: 8000
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      ENCRYPTION_KEY: "xMHsa2xDjswjV8t-nfBjTYS7zpbwqeUCjyK4C9RLm-g="
+      EVOAI_CRM_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      EVO_AUTH_BASE_URL: http://evo-auth:3001
+      EVO_AI_CRM_URL: http://evo-crm:3000
+      CORE_SERVICE_URL: http://evocrm_core:5555/api/v1
+      APP_URL: https://api.bodyharmony.tech
+      API_URL: https://api.bodyharmony.tech
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - evocrm_processor_logs:/app/logs
+    networks:
+      - evolution_network
+
+  evocrm_bot_runtime:
+    image: evoapicloud/evo-bot-runtime:latest
+    container_name: evocrm_bot_runtime
+    restart: unless-stopped
+    environment:
+      LISTEN_ADDR: 0.0.0.0:8080
+      REDIS_URL: redis://redis:6379/1
+      AI_PROCESSOR_URL: http://evocrm_processor:8000
+      BOT_RUNTIME_SECRET: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+    depends_on:
+      - redis
+    networks:
+      - evolution_network
+
+  evolution-go:
+    image: evoapicloud/evolution-go:latest
+    container_name: evolution-go
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      SERVER_PORT: 4000
+      CLIENT_NAME: "evolution"
+      GLOBAL_API_KEY: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      POSTGRES_AUTH_DB: "postgresql://postgres:EvoAdminVPS2026!@postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://postgres:EvoAdminVPS2026!@postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "false"
+      WADEBUG: "INFO"
+      LOGTYPE: "console"
+    volumes:
+      - evolution_data:/app/dbdata
+      - evolution_logs:/app/logs
+    networks:
+      - evolution_network
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.evolution-go.rule=Host(`go.bodyharmony.tech`)"
+      - "traefik.http.routers.evolution-go.entrypoints=websecure"
+      - "traefik.http.routers.evolution-go.tls.certresolver=letsencrypt"
+      - "traefik.http.services.evolution-go.loadbalancer.server.port=4000"
+    depends_on:
+      - postgres
+
+  frontend:
+    image: nginx:alpine
+    container_name: frontend
+    restart: unless-stopped
+    volumes:
+      - /var/www/crm:/usr/share/nginx/html:ro
+    networks:
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`crm.bodyharmony.tech`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - evolution_network
+
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: EvoAdminVPS2026!
+      POSTGRES_DB: evocrm
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - evolution_network
+
+  evo-flow:
+    image: evoapicloud/evo-flow-community:latest
+    build: ./evo-flow-community
+    container_name: evo-flow
+    restart: unless-stopped
+    command: ["sh", "-c", "npx typeorm migration:run -d dist/database/ormconfig.js && node dist/main.js"]
+    environment:
+      NODE_ENV: production
+      RUN_MODE: api
+      PORT: 3000
+      POSTGRES_DB_HOST: postgres
+      POSTGRES_DB_PORT: 5432
+      POSTGRES_DB_USERNAME: postgres
+      POSTGRES_DB_PASSWORD: EvoAdminVPS2026!
+      POSTGRES_DB_DATABASE: evocrm
+      POSTGRES_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      JWT_SECRET_KEY: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      EVO_AUTH_SERVICE_URL: http://evo-auth:3001
+      EVO_AUTH_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      EVOAI_CRM_BASE_URL: http://evo-crm:3000
+      EVOAI_CRM_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      BROKER_TYPE: kafka
+      QUEUE_MODE: redis
+      WRITE_MODE: redis
+      KAFKA_BROKERS: "localhost:9092"
+      KAFKA_BYPASS_CONNECT: "true"
+      CLICKHOUSE_BYPASS_CONNECT: "true"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - evolution_network
+
+volumes:
+  evolution_data:
+  evolution_logs:
+  postgres_data:
+  evocrm_storage:
+  evoauth_storage:
+  evocrm_processor_logs:
+
+networks:
+  evolution_network:
+    driver: bridge
+  traefik_default:
+    external: true
