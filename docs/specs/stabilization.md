@@ -1,6 +1,6 @@
 ---
 title: Environment Stabilization and Error Resolution
-status: draft
+status: shipped
 ---
 
 # Specification — Environment Stabilization
