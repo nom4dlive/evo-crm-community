@@ -77,7 +77,11 @@ TOKEN=$(echo "$LOGIN_RESPONSE" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
-    token = data.get('data', {}).get('access_token') or data.get('access_token') or data.get('token')
+    # Auth response: {success:true, data:{user:{...}, token:{access_token:'...'}}}
+    token = (data.get('data', {}).get('token', {}).get('access_token')
+             or data.get('data', {}).get('access_token')
+             or data.get('access_token')
+             or data.get('token'))
     if token: print(token)
     else: print('NO_TOKEN')
 except: print('PARSE_ERROR')
@@ -96,7 +100,10 @@ else
 import sys, json
 try:
     data = json.load(sys.stdin)
-    token = data.get('data', {}).get('access_token') or data.get('access_token') or data.get('token')
+    token = (data.get('data', {}).get('token', {}).get('access_token')
+             or data.get('data', {}).get('access_token')
+             or data.get('access_token')
+             or data.get('token'))
     if token: print(token)
     else: print('NO_TOKEN')
 except: print('PARSE_ERROR')
