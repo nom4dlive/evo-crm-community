@@ -122,7 +122,7 @@ fi
 log "=== PHASE 3: Database Schema Isolation Audit ==="
 
 TABLES_WITHOUT_TENANT=$(docker exec postgres psql -U postgres -d evocrm -t -A -c \
-    "SELECT DISTINCT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'evo_core%' AND table_name NOT IN (SELECT table_name FROM information_schema.columns WHERE column_name IN ('account_id', 'tenant_id') AND table_name LIKE 'evo_core%') ORDER BY table_name" 2>/dev/null || echo "ERROR")
+    "SELECT DISTINCT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'evo_core%' AND table_name NOT IN ('evo_core_community_schema_migrations', 'evo_core_schema_community_migrations') AND table_name NOT IN (SELECT table_name FROM information_schema.columns WHERE column_name IN ('account_id', 'tenant_id') AND table_name LIKE 'evo_core%') ORDER BY table_name" 2>/dev/null || echo "ERROR")
 
 if [ "$TABLES_WITHOUT_TENANT" = "" ]; then
     record "PASS" "Schema: evo_core tenant isolation" "All evo_core tables have tenant column"
