@@ -16,11 +16,15 @@ FAIL=0
 WARN=0
 RESULTS=""
 
-# Service URLs (from host perspective)
+# Service URLs
+# Auth and CRM are exposed to host. Processor is NOT exposed (internal only).
+# Use gateway (port 3030) to reach processor endpoints.
 AUTH_HOST="http://localhost:3001"
 CRM_HOST="http://localhost:3000"
-PROCESSOR_HOST="http://localhost:8000"
 GATEWAY_HOST="http://localhost:3030"
+# Processor via docker network (docker exec)
+PROCESSOR_DOCKER="evocrm_processor"
+PROCESSOR_INTERNAL="http://evocrm_processor:8000"
 
 log() { echo "[$(date -u +%H:%M:%S)] $*"; }
 
@@ -42,15 +46,16 @@ AUTH_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$AUTH_HOST/health" 2>/dev/
 if [ "$AUTH_HEALTH" = "200" ]; then record "PASS" "Auth Health" "HTTP $AUTH_HEALTH"
 else record "FAIL" "Auth Health" "HTTP $AUTH_HEALTH (expected 200)"; fi
 
-CRM_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$CRM_HOST/health" 2>/dev/null || echo "000")
+CRM_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$CRM_HOST/health/live" 2>/dev/null || echo "000")
 if [ "$CRM_HEALTH" = "200" ]; then record "PASS" "CRM Health" "HTTP $CRM_HEALTH"
 else record "FAIL" "CRM Health" "HTTP $CRM_HEALTH (expected 200)"; fi
 
-PROC_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$PROCESSOR_HOST/healthz" 2>/dev/null || echo "000")
+# Processor health via docker exec (port not exposed to host)
+PROC_HEALTH=$(docker exec $PROCESSOR_DOCKER curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/healthz" 2>/dev/null || echo "000")
 if [ "$PROC_HEALTH" = "200" ]; then record "PASS" "Processor Health" "HTTP $PROC_HEALTH"
 else record "FAIL" "Processor Health" "HTTP $PROC_HEALTH (expected 200)"; fi
 
-PROC_READY=$(curl -s "$PROCESSOR_HOST/readyz" 2>/dev/null || echo '{"status":"error"}')
+PROC_READY=$(docker exec $PROCESSOR_DOCKER curl -s "http://localhost:8000/readyz" 2>/dev/null || echo '{"status":"error"}')
 PROC_READY_STATUS=$(echo "$PROC_READY" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status','error'))" 2>/dev/null || echo "error")
 if [ "$PROC_READY_STATUS" = "ready" ]; then record "PASS" "Processor Readiness" "All subsystems ready"
 else record "WARN" "Processor Readiness" "Status: $PROC_READY_STATUS"; fi
@@ -66,7 +71,7 @@ log "=== PHASE 2: Authentication Flow ==="
 
 LOGIN_RESPONSE=$(curl -s -X POST "$AUTH_HOST/api/v1/auth/login" \
     -H "Content-Type: application/json" \
-    -d '{"email":"superadmin@bodyharmony.tech","password":"Nom4dLive@2026!"}' 2>/dev/null || echo '{"error":"connection_failed"}')
+    -d '{"email":"superadmin@bodyharmony.tech","password":"BodyHarmonyAdmin2026!"}' 2>/dev/null || echo '{"error":"connection_failed"}')
 
 TOKEN=$(echo "$LOGIN_RESPONSE" | python3 -c "
 import sys, json
@@ -86,7 +91,7 @@ else
     # Try Devise session endpoint
     LOGIN_RESPONSE2=$(curl -s -X POST "$AUTH_HOST/auth/sign_in" \
         -H "Content-Type: application/json" \
-        -d '{"user":{"email":"superadmin@bodyharmony.tech","password":"Nom4dLive@2026!"}}' 2>/dev/null || echo '{}')
+        -d '{"user":{"email":"superadmin@bodyharmony.tech","password":"BodyHarmonyAdmin2026!"}}' 2>/dev/null || echo '{}')
     TOKEN2=$(echo "$LOGIN_RESPONSE2" | python3 -c "
 import sys, json
 try:
@@ -140,13 +145,13 @@ record "PASS" "Schema: CRM tenant isolation" "$CRM_TABLES_COUNT tables with acco
 # =============================================================================
 log "=== PHASE 4: Processor API Endpoint Tests ==="
 
-UNAUTH=$(curl -s -o /dev/null -w "%{http_code}" "$PROCESSOR_HOST/api/v1/sessions/account" 2>/dev/null || echo "000")
+UNAUTH=$(docker exec $PROCESSOR_DOCKER curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/api/v1/sessions/account" 2>/dev/null || echo "000")
 if [ "$UNAUTH" = "401" ] || [ "$UNAUTH" = "403" ]; then
     record "PASS" "Processor: Unauthenticated sessions" "HTTP $UNAUTH"
 else record "FAIL" "Processor: Unauthenticated sessions" "HTTP $UNAUTH (expected 401/403)"; fi
 
 RANDOM_SESSION="00000000-0000-0000-0000-000000000000"
-RANDOM_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROCESSOR_HOST/api/v1/sessions/$RANDOM_SESSION" 2>/dev/null || echo "000")
+RANDOM_STATUS=$(docker exec $PROCESSOR_DOCKER curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/api/v1/sessions/$RANDOM_SESSION" 2>/dev/null || echo "000")
 if [ "$RANDOM_STATUS" = "401" ] || [ "$RANDOM_STATUS" = "403" ] || [ "$RANDOM_STATUS" = "404" ]; then
     record "PASS" "Processor: Random session access" "HTTP $RANDOM_STATUS"
 else record "FAIL" "Processor: Random session access" "HTTP $RANDOM_STATUS (expected 401/403/404)"; fi
@@ -177,7 +182,7 @@ if [ "$TOKEN" != "NO_TOKEN" ] && [ "$TOKEN" != "PARSE_ERROR" ] && [ -n "$TOKEN" 
     if [ "$AUTH_CRM" = "200" ]; then record "PASS" "Cross-service: Token on CRM" "HTTP $AUTH_CRM"
     else record "WARN" "Cross-service: Token on CRM" "HTTP $AUTH_CRM"; fi
 
-    AUTH_PROC=$(curl -s -o /dev/null -w "%{http_code}" "$PROCESSOR_HOST/api/v1/sessions/account" \
+    AUTH_PROC=$(docker exec $PROCESSOR_DOCKER curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/api/v1/sessions/account" \
         -H "Authorization: Bearer $TOKEN" 2>/dev/null || echo "000")
     if [ "$AUTH_PROC" = "200" ]; then record "PASS" "Cross-service: Token on Processor" "HTTP $AUTH_PROC"
     else record "WARN" "Cross-service: Token on Processor" "HTTP $AUTH_PROC"; fi
@@ -189,7 +194,7 @@ if [ "$TOKEN" != "NO_TOKEN" ] && [ "$TOKEN" != "PARSE_ERROR" ] && [ -n "$TOKEN" 
         record "PASS" "Cross-service: Fake token rejected by CRM" "HTTP $FAKE_CRM"
     else record "FAIL" "Cross-service: Fake token rejected by CRM" "HTTP $FAKE_CRM (expected 401/403)"; fi
 
-    FAKE_PROC=$(curl -s -o /dev/null -w "%{http_code}" "$PROCESSOR_HOST/api/v1/sessions/account" \
+    FAKE_PROC=$(docker exec $PROCESSOR_DOCKER curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/api/v1/sessions/account" \
         -H "Authorization: Bearer $FAKE_TOKEN" 2>/dev/null || echo "000")
     if [ "$FAKE_PROC" = "401" ] || [ "$FAKE_PROC" = "403" ]; then
         record "PASS" "Cross-service: Fake token rejected by Processor" "HTTP $FAKE_PROC"
