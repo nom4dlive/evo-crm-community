@@ -167,6 +167,7 @@ services:
 
   evocrm_processor:
     image: evoapicloud/evo-ai-processor-community:latest
+    build: ./evo-ai-processor-community
     container_name: evocrm_processor
     command: sh -c "alembic upgrade head 2>&1 || echo 'Alembic migration had errors, continuing...'; python -m scripts.run_seeders; uvicorn src.main:app --host $$HOST --port $$PORT"
     restart: unless-stopped
