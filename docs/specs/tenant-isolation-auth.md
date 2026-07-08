@@ -1,3 +1,8 @@
+---
+title: Multi-Tenant Scoping and Security Isolation
+status: shipped
+---
+
 # Spec: Multi-Tenant Scoping and Security Isolation
 
 ## Status

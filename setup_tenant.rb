@@ -10,6 +10,14 @@ account = Account.find_or_create_by!(slug: 'bodyharmony') do |a|
   a.status = 'active'
 end
 
+# Create Tenant for legacy compatibility
+tenant = Tenant.find_or_create_by!(slug: 'bodyharmony') do |t|
+  t.name = 'Body Harmony'
+  t.subdomain = 'bodyharmony'
+  t.status = 'active'
+  t.plan = 'enterprise'
+end
+
 # Find roles
 superadmin_role = Role.find_by(name: 'superadmin') || Role.first
 admin_role = Role.find_by(name: 'admin') || Role.first

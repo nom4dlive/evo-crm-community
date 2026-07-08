@@ -1,4 +1,14 @@
+---
+date: 2026-07-08
+lifecycle:
+  owner: "unassigned"
+  review_cadence: "on-event"
+  review_trigger: "Multi-tenant query scoping policies or auth token claims changed"
+  supersedes: "none"
+  superseded_by: "none"
+---
 # ADR-002: Multi-Tenant Scoping and Security Isolation
+
 
 ## Status
 Proposed

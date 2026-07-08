@@ -1,4 +1,14 @@
+---
+date: 2026-07-08
+lifecycle:
+  owner: "unassigned"
+  review_cadence: "on-event"
+  review_trigger: "Routing architecture modifications or new proxy domains added"
+  supersedes: "none"
+  superseded_by: "none"
+---
 # ADR-001: Custom Domain and Subdomain Routing
+
 
 **Status:** Accepted
 
