@@ -64,11 +64,12 @@ account = Account.find_or_create_by!(slug: '${SLUG}') do |a|
   a.domain = '${SLUG}.tech'
   a.status = 'active'
 end
-admin_role = Role.find_by(name: 'admin') || Role.first
+admin_role = Role.find_by(key: 'account_owner') || Role.find_by(key: 'super_admin') || Role.first
 user = User.find_or_initialize_by(email: '${EMAIL}')
 user.password = '${PASSWORD}'
 user.name = '${NAME} Admin'
 user.account = account
+user.confirm
 user.save!
 UserRole.find_or_create_by!(user: user, role: admin_role, account_id: account.id)
 puts "✅ Tenant and User configured successfully!"

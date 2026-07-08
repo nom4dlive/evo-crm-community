@@ -19,14 +19,15 @@ tenant = Tenant.find_or_create_by!(slug: 'bodyharmony') do |t|
 end
 
 # Find roles
-superadmin_role = Role.find_by(name: 'superadmin') || Role.first
-admin_role = Role.find_by(name: 'admin') || Role.first
+superadmin_role = Role.find_by(key: 'super_admin') || Role.first
+admin_role = Role.find_by(key: 'account_owner') || Role.first
 
 # Create superadmin
 superadmin = User.find_or_initialize_by(email: 'superadmin@bodyharmony.tech')
 superadmin.password = 'BodyHarmonyAdmin2026!'
 superadmin.name = 'Super Admin'
 superadmin.account = account
+superadmin.confirm
 superadmin.save!
 
 # Add superadmin role
@@ -37,6 +38,7 @@ support = User.find_or_initialize_by(email: 'suporte@bodyharmony.tech')
 support.password = 'SuporteBH2026!'
 support.name = 'Suporte BH'
 support.account = account
+support.confirm
 support.save!
 
 # Add admin role to support
