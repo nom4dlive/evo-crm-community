@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-09T22:24:00Z
+- **Last Updated**: 2026-07-09T23:31:00Z
 - **Last Verified**: 2026-07-09
-- **Update Sequence**: 14
+- **Update Sequence**: 15
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -63,6 +63,10 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-main-2026-07-09-multi-tenant-isolation-scoping
+- Feature shipped: Scoped custom roles by Current.account_id and fixed rescue_from StandardError precedence in Api::BaseController.
+- Tests: Pass
 
 ### Ship-main-2026-07-09-hermes-e2e-roles
 - Feature shipped: Resolved roles (inboxes) tenant isolation gap in evo-auth service by adding account_id to roles table, applying dynamic default scope, and fixing exception handling precedence.
