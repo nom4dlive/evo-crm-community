@@ -27,6 +27,7 @@ services:
 
   evo-auth:
     image: evoapicloud/evo-auth-service-community:latest
+    build: ./evo-auth-service-community
     container_name: evo-auth
     command: ["bash", "-c", "bundle exec rails db:create && bundle exec rails db:migrate && bundle exec rails server -p 3001 -b 0.0.0.0"]
     restart: unless-stopped
@@ -302,6 +303,7 @@ services:
       EVO_AUTH_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
       EVOAI_CRM_BASE_URL: http://evo-crm:3000
       EVOAI_CRM_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      AUTH_APIKEY_INTEGRATION_LOCAL: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
       BROKER_TYPE: kafka
       QUEUE_MODE: redis
       WRITE_MODE: redis
