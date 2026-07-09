@@ -61,6 +61,7 @@
 
 (none yet)
 
+- [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
 
 ### Ship-main-2026-07-09-hermes-e2e-roles
