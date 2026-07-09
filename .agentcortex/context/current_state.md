@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-08T18:48:00-03:00
-- **Last Verified**: 2026-07-08
-- **Update Sequence**: 9
+- **Last Updated**: 2026-07-09T22:24:00Z
+- **Last Verified**: 2026-07-09
+- **Update Sequence**: 14
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -62,6 +62,26 @@
 (none yet)
 
 ## Ship History
+
+### Ship-main-2026-07-09-hermes-e2e-roles
+- Feature shipped: Resolved roles (inboxes) tenant isolation gap in evo-auth service by adding account_id to roles table, applying dynamic default scope, and fixing exception handling precedence.
+- Tests: Pass
+
+### Ship-main-2026-07-09-hermes-e2e
+- Feature shipped: End-to-end API-level Playwright tests created and verified for account, user, contact, and inbox tenant isolation on the Podman Desktop container stack.
+- Tests: Pass
+
+### Ship-main-2026-07-09-tenant-isolation
+- Feature shipped: Fixed the multi-tenant isolation leak in Auth API where `StandardError` blocked `RecordNotFound` exceptions, and enforced strict TDD isolation checks across both evo-auth and evo-crm services.
+- Tests: Pass
+
+### Ship-main-2026-07-09-testes-vps
+- Feature shipped: Validated real tests on VPS for Tenant isolation. Bootstrapped testevps tenant via SSH script, generated JWT from evo-auth, and successfully routed and validated tenant isolation on both CRM (Go) and Processor (Python) endpoints via Traefik/Nginx.
+- Tests: Pass
+
+### Ship-main-2026-07-08-random-tenant-provisioning
+- Feature shipped: Interactively provisioned a new random tenant (`tenant-4829`) on the VPS environment and verified database schema insertion (Account and User tables) and successful OAuth2 login auth handshake with HTTP 200 OK.
+- Tests: Pass
 
 ### Ship-main-2026-07-08-remediation
 - Feature shipped: Resolved all multi-tenant isolation database schema and middleware gaps in the community build of the Go core service (activated CommunityTenantPlugin and declared tenant_id column) and Python processor service (added tenant_id column via Alembic migration). Fixed Redis SSL connection parameter mismatch and EvoAuth exception handler request parameters. Verified 17/17 integration tests passing successfully on the VPS.
