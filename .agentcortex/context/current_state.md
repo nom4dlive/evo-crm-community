@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T15:58:00Z
+- **Last Updated**: 2026-07-10T16:02:00Z
 - **Last Verified**: 2026-07-10
-- **Update Sequence**: 25
+- **Update Sequence**: 26
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -26,6 +26,7 @@
 - **Spec Index** (project specs at `docs/specs/`):
   - docs/specs/asaas-billing-webhooks-homologation.md: Asaas Webhook Ingress & Idempotency Homologation · status: shipped · applies_to: evo-billing-service
   - docs/specs/asaas-customer-sync-real.md: Asaas Customer Sync & Document Validation · status: shipped · applies_to: evo-billing-service
+  - docs/specs/asaas-dunning-sidekiq-homologation.md: Asaas Dunning Enforcement & Sidekiq Cron Resiliance · status: shipped · applies_to: evo-billing-service
   - docs/specs/financial-management.md: Financial Management Module · status: draft · applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community
   - docs/specs/stabilization.md: Environment Stabilization and Error Resolution · status: shipped · applies_to: evo-flow-community, nginx
   - docs/specs/tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · status: shipped · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -67,6 +68,10 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-feature-asaas-dunning-sidekiq-2026-07-10
+- Feature shipped: Resiliência de Cobrança e Dunning via Sidekiq (Fase 4), enforcando a suspensão automática de contas com período de graça expirado e chamadas seguras S2S para evo-auth.
+- Tests: Pass
 
 ### Ship-feature-asaas-billing-webhooks-2026-07-10
 - Feature shipped: Homologação e Testes E2E de Webhook (Fase 3), incluindo criação de fixture JSON, validação de token e segurança de idempotência.
