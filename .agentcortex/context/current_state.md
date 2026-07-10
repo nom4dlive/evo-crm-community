@@ -15,12 +15,13 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T00:17:00Z
+- **Last Updated**: 2026-07-10T01:06:00Z
 - **Last Verified**: 2026-07-09
-- **Update Sequence**: 17
+- **Update Sequence**: 19
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
+  - docs/adr/ADR-003-billing-service-architecture.md: Financial Management — evo-billing-service Architecture · applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community, docker-compose.yml, vps-docker-compose.yml, nginx
 - **Active Backlog**: docs/specs/_product-backlog.md
 - **Spec Index** (project specs at `docs/specs/`):
   - docs/specs/stabilization.md: Environment Stabilization and Error Resolution · status: shipped · applies_to: evo-flow-community, nginx
@@ -63,6 +64,10 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-main-2026-07-09-update-tenant-password
+- Feature shipped: Atualização de senha do usuário tiagoaraujoarq@gmail.com (tenant Tiago_Araujo) no VPS de produção. Nova senha: `Araujo@2026!`. Rails runner confirmou `Password updated successfully: true`.
+- Tests: Pass
 
 ### Ship-main-2026-07-09-create-beta-tenant
 - Feature shipped: Provisioned Tiago_Araujo tenant and tiagoaraujoarq@gmail.com user on production VPS to act as beta tester.

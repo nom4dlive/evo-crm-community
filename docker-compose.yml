@@ -39,6 +39,10 @@ services:
   evo-auth:
     image: evoapicloud/evo-auth-service-community:latest
     container_name: evo-auth
+    volumes:
+      - ./evo-auth-service-community:/app
+      - ./evo-auth-service-community:/rails
+      - ./shared:/shared
     command: ["bash", "-c", "bundle exec rails db:create && bundle exec rails db:migrate && bundle exec rails server -p 3001 -b 0.0.0.0"]
     restart: unless-stopped
     ports:
@@ -91,6 +95,65 @@ services:
     networks:
       - evolution_network
 
+  # evo-billing-service: Financial management microservice
+  # Ref: ADR-003, Spec P1-AC-12
+  evo-billing:
+    build:
+      context: ./evo-billing-service
+      dockerfile: Dockerfile
+    container_name: evo-billing
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgresql://postgres:EvoAdminVPS2026!@billing-db:5432/evo_billing_production
+      REDIS_URL: redis://redis:6379/2
+      RAILS_LOG_TO_STDOUT: "true"
+      SECRET_KEY_BASE: "CHANGE_ME_BILLING_SECRET_KEY_BASE"
+      # JWT public key from evo-auth (Doorkeeper) — set in .env
+      EVO_AUTH_JWT_PUBLIC_KEY: ${EVO_AUTH_JWT_PUBLIC_KEY}
+      # Internal S2S secret for suspend/unsuspend calls to evo-auth — Ref: Spec C-04
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      EVO_AUTH_INTERNAL_URL: http://evo-auth:3001
+    depends_on:
+      - billing-db
+      - redis
+    networks:
+      - evolution_network
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      # Route /billing/* to evo-billing service — Ref: ADR-003 D7, Spec P1-AC-12
+      - "traefik.http.routers.evo-billing.rule=Host(`crm.bodyharmony.tech`) && PathPrefix(`/billing/`)"
+      - "traefik.http.routers.evo-billing.entrypoints=websecure"
+      - "traefik.http.routers.evo-billing.tls.certresolver=letsencrypt"
+      - "traefik.http.services.evo-billing.loadbalancer.server.port=3002"
+      # Strip /billing prefix before forwarding to Rails
+      - "traefik.http.middlewares.billing-strip.stripprefix.prefixes=/billing"
+      - "traefik.http.routers.evo-billing.middlewares=billing-strip"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Dedicated billing database — isolated from evogo_auth — Ref: ADR-003 D2, Spec P1-AC-02
+  billing-db:
+    image: postgres:15-alpine
+    container_name: billing-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: EvoAdminVPS2026!
+      POSTGRES_DB: evo_billing_production
+    volumes:
+      - billing_db_data:/var/lib/postgresql/data
+    networks:
+      - evolution_network
+    # NOT exposed to Traefik — internal only (Spec C-04)
+
   postgres:
     image: postgres:15-alpine
     container_name: postgres
@@ -111,6 +174,7 @@ volumes:
   evolution_data:
   evolution_logs:
   postgres_data:
+  billing_db_data:
 
 networks:
   evolution_network:
