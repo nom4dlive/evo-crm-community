@@ -1,0 +1,29 @@
+{
+  "id": "evt_001",
+  "event": "PAYMENT_CONFIRMED",
+  "dateCreated": "2026-07-10T14:35:00-03:00",
+  "payment": {
+    "object": "payment",
+    "id": "pay_asaas_001",
+    "dateCreated": "2026-07-10",
+    "customer": "cus_000005741290",
+    "paymentLink": null,
+    "value": 100.00,
+    "netValue": 99.00,
+    "originalValue": null,
+    "interestValue": null,
+    "description": "Fatura de teste",
+    "billingType": "PIX",
+    "confirmedDate": "2026-07-10",
+    "creditDate": "2026-07-10",
+    "originalDueDate": "2026-07-10",
+    "dueDate": "2026-07-10",
+    "paymentDate": "2026-07-10",
+    "clientPaymentDate": "2026-07-10",
+    "installmentNumber": null,
+    "invoiceUrl": "https://sandbox.asaas.com/i/001",
+    "invoiceNumber": "0000001",
+    "externalReference": null,
+    "status": "CONFIRMED"
+  }
+}

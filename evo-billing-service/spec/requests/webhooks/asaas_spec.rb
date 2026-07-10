@@ -18,14 +18,7 @@ RSpec.describe "Webhooks::Asaas", type: :request do
 
   describe "POST /webhooks/asaas" do
     let(:payment_payload) do
-      {
-        id: "evt_001",
-        event: "PAYMENT_CONFIRMED",
-        payment: {
-          id: "pay_asaas_001",
-          status: "CONFIRMED"
-        }
-      }
+      JSON.parse(File.read(Rails.root.join("spec/fixtures/webhook_payment_confirmed.json")), symbolize_names: true)
     end
 
     context "with valid signature" do
