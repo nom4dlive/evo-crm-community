@@ -33,6 +33,8 @@ Rails.application.routes.draw do
       namespace :admin do
         # Superadmin cross-tenant invoice list (Spec P1-AC-10)
         resources :invoices, only: [:index, :show]
+        resources :subscriptions, only: [:index]
+        get :dashboard, to: "dashboard#index"
       end
     end
   end

@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :plan do
-    sequence(:name) { |n| "Plan #{n}" }
-    sequence(:slug) { |n| "plan-#{n}" }
+    sequence(:name) { |n| "Plan #{n} #{SecureRandom.hex(4)}" }
+    sequence(:slug) { |n| "plan-#{n}-#{SecureRandom.hex(4)}" }
     tier { "starter" }
     price_monthly_cents { 4990 }
     price_annual_cents { 49900 }
