@@ -4,9 +4,18 @@ RSpec.describe "Api::V1::Plans", type: :request do
   let(:plan) { create(:plan) }
 
   describe "GET /api/v1/plans — public" do
-    it "returns 200 without auth token" do
-      create_list(:plan, 3)
+    it "returns active plans only for guest" do
+      create_list(:plan, 2, active: true)
+      create(:plan, active: false)
       get "/api/v1/plans"
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)["data"].size).to eq(2)
+    end
+
+    it "returns all plans (including inactive) for superadmin" do
+      create_list(:plan, 2, active: true)
+      create(:plan, active: false)
+      get "/api/v1/plans", headers: superadmin_headers
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)["data"].size).to eq(3)
     end

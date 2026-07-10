@@ -14,7 +14,23 @@ module Api
 
       # GET /api/v1/plans — public (Spec P1-AC-08)
       def index
-        @plans = Plan.active.order(tier: :asc, price_monthly_cents: :asc)
+        if request.headers["Authorization"].present?
+          begin
+            token = extract_token_from_header
+            if token
+              payload = JsonWebToken.decode(token)
+              Current.role = normalize_role(payload["role"])
+            end
+          rescue
+            # Ignore token decode errors on public index
+          end
+        end
+
+        if Current.superadmin?
+          @plans = Plan.all.order(tier: :asc, price_monthly_cents: :asc)
+        else
+          @plans = Plan.active.order(tier: :asc, price_monthly_cents: :asc)
+        end
         render json: { data: plans_json(@plans) }
       end
 
