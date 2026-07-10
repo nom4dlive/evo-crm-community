@@ -91,6 +91,21 @@ module Webhooks
       if payment
         Current.account_id = payment.account_id
         payment.update!(status: "confirmed")
+
+        invoice = payment.invoice
+        if invoice
+          invoice.update!(status: "paid")
+
+          subscription = invoice.subscription
+          if subscription
+            was_past_due = subscription.past_due?
+            subscription.update!(status: "active", grace_period_ends_at: nil)
+
+            if was_past_due
+              unsuspend_account!(payment.account_id)
+            end
+          end
+        end
       end
 
       # Try contact charge (tenant→contact charges)
@@ -133,6 +148,32 @@ module Webhooks
       end
     ensure
       Current.account_id = nil
+    end
+
+    private
+
+    def unsuspend_account!(account_id)
+      auth_url = ENV.fetch("EVO_AUTH_INTERNAL_URL", "http://evo-auth:3001")
+      secret   = ENV.fetch("INTERNAL_API_SECRET", "")
+
+      uri = URI.parse("#{auth_url}/api/v1/internal/accounts/#{account_id}/unsuspend")
+
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.scheme == "https"
+      http.open_timeout = 5
+      http.read_timeout = 10
+
+      request = Net::HTTP::Post.new(uri.request_uri)
+      request["Content-Type"]  = "application/json"
+      request["Authorization"] = "Bearer #{secret}"
+
+      response = http.request(request)
+
+      unless response.is_a?(Net::HTTPSuccess)
+        Rails.logger.error "[Webhooks::Asaas] Failed to unsuspend account #{account_id}: #{response.code} — #{response.body}"
+      end
+    rescue StandardError => e
+      Rails.logger.error "[Webhooks::Asaas] Connection error unsuspending account #{account_id}: #{e.message}"
     end
   end
 end

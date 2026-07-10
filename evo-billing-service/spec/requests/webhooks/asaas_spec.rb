@@ -128,5 +128,64 @@ RSpec.describe "Webhooks::Asaas", type: :request do
         expect(charge.reload.status).to eq("confirmed")
       end
     end
+
+    context "PAYMENT_CONFIRMED updates platform payment and unsuspends account" do
+      it "updates subscription, invoice, and triggers S2S unsuspend" do
+        Current.account_id = 1
+        plan = Plan.create!(
+          name: "Pro", price_monthly_cents: 9900, price_annual_cents: 99000,
+          tier: "pro", annual_discount_pct: 0, active: true
+        )
+        sub = Subscription.create!(
+          account_id: 1,
+          plan: plan,
+          billing_cycle: "monthly",
+          status: "past_due",
+          grace_period_ends_at: 2.days.from_now
+        )
+        invoice = Invoice.create!(
+          account_id: 1,
+          subscription: sub,
+          status: "open",
+          subtotal_cents: 9900,
+          total_cents: 9900,
+          currency: "BRL",
+          due_date: Date.current
+        )
+        payment = Payment.create!(
+          account_id: 1,
+          invoice: invoice,
+          method: "pix",
+          status: "pending",
+          amount_cents: 9900,
+          asaas_payment_id: "pay_asaas_001"
+        )
+        Current.account_id = nil
+
+        auth_url = "http://evo-auth:3001"
+        secret = "test_internal_secret"
+        allow(ENV).to receive(:fetch).and_call_original
+        allow(ENV).to receive(:fetch).with("EVO_AUTH_INTERNAL_URL", anything).and_return(auth_url)
+        allow(ENV).to receive(:fetch).with("INTERNAL_API_SECRET", anything).and_return(secret)
+
+        stub_request(:post, "#{auth_url}/api/v1/internal/accounts/1/unsuspend")
+          .with(headers: { "Authorization" => "Bearer #{secret}" })
+          .to_return(status: 200, body: { status: "active" }.to_json)
+
+        post "/webhooks/asaas",
+             params: payment_payload.to_json,
+             headers: {
+               "Content-Type" => "application/json",
+               "asaas-access-token" => valid_secret
+             }
+
+        expect(response).to have_http_status(:ok), "Expected 200, got: #{response.body}"
+        expect(payment.reload.status).to eq("confirmed")
+        expect(invoice.reload.status).to eq("paid")
+        expect(sub.reload.status).to eq("active")
+        expect(sub.grace_period_ends_at).to be_nil
+        expect(WebMock).to have_requested(:post, "#{auth_url}/api/v1/internal/accounts/1/unsuspend")
+      end
+    end
   end
 end
