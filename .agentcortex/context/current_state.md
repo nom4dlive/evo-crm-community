@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T16:02:00Z
+- **Last Updated**: 2026-07-10T16:33:00Z
 - **Last Verified**: 2026-07-10
-- **Update Sequence**: 26
+- **Update Sequence**: 27
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -68,6 +68,10 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-feature-financial-frontend-ui-2026-07-10
+- Feature shipped: Estabilização do Frontend do Módulo Financeiro (Fase 3), corrigindo imports não utilizados do React (TS6133) que impediam a compilação do bundle de produção do Vite.
+- Tests: Pass
 
 ### Ship-feature-asaas-dunning-sidekiq-2026-07-10
 - Feature shipped: Resiliência de Cobrança e Dunning via Sidekiq (Fase 4), enforcando a suspensão automática de contas com período de graça expirado e chamadas seguras S2S para evo-auth.
