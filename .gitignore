@@ -52,3 +52,10 @@ graphify-out/
 graphify-out-flow/
 internal/
 
+# Post-merge cleanup — untracked directories
+logs/
+shared/
+test-results/
+tmp/
+tests/e2e/node_modules/
+
