@@ -1,0 +1,14 @@
+{
+  "name": "evolution-crm-e2e",
+  "version": "1.0.0",
+  "description": "E2E Test Suite for Evolution CRM using Playwright",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:hermes": "bash scripts/trigger_hermes.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.1",
+    "@types/node": "^20.12.12"
+  }
+}

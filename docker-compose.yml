@@ -60,6 +60,8 @@ services:
       DOORKEEPER_JWT_SECRET_KEY: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
       EVOLUTION_OPERATOR_EMAIL: "admin@seudominio.com"
       EVOAI_CRM_API_TOKEN: "f8d8b13d-5c17-4952-b8d1-12c5b3644917"
+      # S2S secret shared with evo-billing-service — Ref: Spec P2-AC-04
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
     depends_on:
       - postgres
       - redis
@@ -138,6 +140,32 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Dedicated Sidekiq worker for evo-billing background jobs — Ref: Spec P2-AC-04
+  evo-billing-sidekiq:
+    build:
+      context: ./evo-billing-service
+      dockerfile: Dockerfile
+    container_name: evo-billing-sidekiq
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-q", "billing", "-q", "default"]
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgresql://postgres:EvoAdminVPS2026!@billing-db:5432/evo_billing_production
+      REDIS_URL: redis://redis:6379/2
+      RAILS_LOG_TO_STDOUT: "true"
+      SECRET_KEY_BASE: "CHANGE_ME_BILLING_SECRET_KEY_BASE"
+      EVO_AUTH_JWT_PUBLIC_KEY: ${EVO_AUTH_JWT_PUBLIC_KEY}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      EVO_AUTH_INTERNAL_URL: http://evo-auth:3001
+      ASAAS_API_KEY: ${ASAAS_API_KEY}
+      ASAAS_WEBHOOK_SECRET: ${ASAAS_WEBHOOK_SECRET}
+    depends_on:
+      - billing-db
+      - redis
+      - evo-auth
+    networks:
+      - evolution_network
 
   # Dedicated billing database — isolated from evogo_auth — Ref: ADR-003 D2, Spec P1-AC-02
   billing-db:
