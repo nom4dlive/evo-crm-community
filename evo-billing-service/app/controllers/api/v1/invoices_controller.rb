@@ -27,6 +27,9 @@ module Api
       end
 
       def invoice_json(inv)
+        payment = Payment.find_by(invoice_id: inv.id)
+        nfe_doc = payment&.nfe_document
+
         {
           id: inv.id,
           account_id: inv.account_id,
@@ -37,7 +40,17 @@ module Api
           currency: inv.currency,
           due_date: inv.due_date&.iso8601,
           paid_at: inv.paid_at&.iso8601,
-          created_at: inv.created_at&.iso8601
+          created_at: inv.created_at&.iso8601,
+          payment_id: payment&.id,
+          nfe_document: nfe_doc ? {
+            id: nfe_doc.id,
+            asaas_nfe_id: nfe_doc.asaas_nfe_id,
+            nfe_number: nfe_doc.nfe_number,
+            pdf_url: nfe_doc.pdf_url,
+            xml_url: nfe_doc.xml_url,
+            nfe_error: nfe_doc.nfe_error,
+            issued_at: nfe_doc.issued_at&.iso8601
+          } : nil
         }
       end
     end

@@ -7,17 +7,20 @@ class Api::V1::ContactChargesController < ApplicationController
   include AuthenticatedRequest
 
   before_action :require_admin!
-  before_action :set_charge, only: [:show, :cancel]
+  before_action :set_charge, only: [:show, :cancel, :retry_nfe]
 
   # GET /api/v1/contact_charges
   def index
-    charges = ContactCharge.includes(:customer)
+    charges = ContactCharge.includes(:customer, :nfe_document)
                            .order(created_at: :desc)
                            .page(params[:page])
                            .per(params[:per_page] || 20)
 
     render json: {
-      data: charges.as_json(include: { customer: { only: [:id, :name, :cpf_cnpj] } }),
+      data: charges.as_json(include: {
+        customer: { only: [:id, :name, :cpf_cnpj] },
+        nfe_document: { only: [:id, :asaas_nfe_id, :nfe_number, :pdf_url, :xml_url, :nfe_error, :issued_at] }
+      }),
       meta: pagination_meta(charges)
     }
   end
@@ -25,7 +28,10 @@ class Api::V1::ContactChargesController < ApplicationController
   # GET /api/v1/contact_charges/:id
   def show
     render json: {
-      data: @charge.as_json(include: { customer: { only: [:id, :name, :cpf_cnpj] } })
+      data: @charge.as_json(include: {
+        customer: { only: [:id, :name, :cpf_cnpj] },
+        nfe_document: { only: [:id, :asaas_nfe_id, :nfe_number, :pdf_url, :xml_url, :nfe_error, :issued_at] }
+      })
     }
   end
 
@@ -79,6 +85,20 @@ class Api::V1::ContactChargesController < ApplicationController
       message: e.message,
       details: e.body
     }, status: :bad_gateway
+  end
+
+  # POST /api/v1/contact_charges/:id/nfe/retry
+  def retry_nfe
+    if @charge.confirmed?
+      nfe_doc = @charge.nfe_document
+      nfe_doc&.update!(nfe_error: nil)
+
+      NfeEmissionJob.perform_async(@charge.account_id, nil, @charge.id)
+      render json: { data: { status: "queued", contact_charge_id: @charge.id } }
+    else
+      render json: { error: "unprocessable_entity", message: "Only confirmed charges can emit NF-e" },
+             status: :unprocessable_entity
+    end
   end
 
   private

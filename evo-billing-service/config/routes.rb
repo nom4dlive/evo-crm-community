@@ -23,10 +23,18 @@ Rails.application.routes.draw do
       # Customers — tenant admin manages Asaas-synced customers (Spec P2-AC-01)
       resources :customers, only: [:index, :show, :create, :destroy]
 
+      # Payments retry — tenant admin (Spec P4-AC-03)
+      resources :payments, only: [] do
+        member do
+          post "nfe/retry", to: "payments#retry_nfe"
+        end
+      end
+
       # Contact Charges — tenant admin charges contacts (Spec P2-AC-02)
       resources :contact_charges, only: [:index, :show, :create] do
         member do
           post :cancel
+          post "nfe/retry", to: "contact_charges#retry_nfe"
         end
       end
 
@@ -35,6 +43,7 @@ Rails.application.routes.draw do
         resources :invoices, only: [:index, :show]
         resources :subscriptions, only: [:index]
         get :dashboard, to: "dashboard#index"
+        get "reports/fiscal", to: "reports#fiscal"
       end
     end
   end

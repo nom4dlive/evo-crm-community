@@ -12,6 +12,7 @@ class Payment < ApplicationRecord
   STATUSES = %w[pending confirmed failed refunded].freeze
 
   belongs_to :invoice, optional: true
+  has_one :nfe_document, dependent: :nullify
 
   validates :account_id, presence: true
   validates :method,     inclusion: { in: METHODS }

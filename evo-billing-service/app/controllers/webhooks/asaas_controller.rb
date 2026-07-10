@@ -106,6 +106,9 @@ module Webhooks
             end
           end
         end
+
+        # Trigger NF-e emission asynchronously (Spec P4-AC-01)
+        NfeEmissionJob.perform_async(payment.account_id, payment.id, nil)
       end
 
       # Try contact charge (tenant→contact charges)
@@ -113,6 +116,9 @@ module Webhooks
       if charge
         Current.account_id = charge.account_id
         charge.confirm!
+
+        # Trigger NF-e emission asynchronously (Spec P4-AC-01)
+        NfeEmissionJob.perform_async(charge.account_id, nil, charge.id)
       end
     ensure
       Current.account_id = nil

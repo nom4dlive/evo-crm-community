@@ -60,6 +60,21 @@ class AsaasClient
     delete("/v3/payments/#{asaas_id}")
   end
 
+  # Create an NF-e linked to a payment/charge
+  # @param payment_id [String] Asaas payment/charge ID
+  # @param attrs [Hash] Additional options
+  # @return [Hash] parsed JSON response
+  def create_nfe(payment_id, attrs = {})
+    post("/v3/invoices", attrs.merge(payment: payment_id))
+  end
+
+  # Get NF-e details
+  # @param nfe_id [String] Asaas invoice ID
+  # @return [Hash] parsed JSON response
+  def get_nfe(nfe_id)
+    get("/v3/invoices/#{nfe_id}")
+  end
+
   private
 
   def get(path)

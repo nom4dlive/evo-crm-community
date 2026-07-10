@@ -316,6 +316,86 @@ services:
     networks:
       - evolution_network
 
+  evo-billing:
+    image: evoapicloud/evo-billing-service:latest
+    build:
+      context: ./evo-billing-service
+      dockerfile: Dockerfile
+    container_name: evo-billing
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgresql://postgres:EvoAdminVPS2026!@billing-db:5432/evo_billing_production
+      REDIS_URL: redis://redis:6379/2
+      RAILS_LOG_TO_STDOUT: "true"
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      EVO_AUTH_JWT_PUBLIC_KEY: ${EVO_AUTH_JWT_PUBLIC_KEY}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      EVO_AUTH_INTERNAL_URL: http://evo-auth:3001
+      ASAAS_API_KEY: ${ASAAS_API_KEY}
+      ASAAS_WEBHOOK_SECRET: ${ASAAS_WEBHOOK_SECRET}
+    depends_on:
+      - billing-db
+      - redis
+    networks:
+      - evolution_network
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.evo-billing.rule=Host(`crm.bodyharmony.tech`) && PathPrefix(`/billing/`)"
+      - "traefik.http.routers.evo-billing.entrypoints=websecure"
+      - "traefik.http.routers.evo-billing.tls.certresolver=letsencrypt"
+      - "traefik.http.services.evo-billing.loadbalancer.server.port=3002"
+      - "traefik.http.middlewares.billing-strip.stripprefix.prefixes=/billing"
+      - "traefik.http.routers.evo-billing.middlewares=billing-strip"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  evo-billing-sidekiq:
+    image: evoapicloud/evo-billing-service:latest
+    build:
+      context: ./evo-billing-service
+      dockerfile: Dockerfile
+    container_name: evo-billing-sidekiq
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-q", "billing", "-q", "default"]
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgresql://postgres:EvoAdminVPS2026!@billing-db:5432/evo_billing_production
+      REDIS_URL: redis://redis:6379/2
+      RAILS_LOG_TO_STDOUT: "true"
+      SECRET_KEY_BASE: "b45579308e2ec1b95b866c1b354238e5628b056157e3f282470a1a51152a537f"
+      EVO_AUTH_JWT_PUBLIC_KEY: ${EVO_AUTH_JWT_PUBLIC_KEY}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      EVO_AUTH_INTERNAL_URL: http://evo-auth:3001
+      ASAAS_API_KEY: ${ASAAS_API_KEY}
+      ASAAS_WEBHOOK_SECRET: ${ASAAS_WEBHOOK_SECRET}
+    depends_on:
+      - billing-db
+      - redis
+      - evo-auth
+    networks:
+      - evolution_network
+
+  billing-db:
+    image: postgres:15-alpine
+    container_name: billing-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: EvoAdminVPS2026!
+      POSTGRES_DB: evo_billing_production
+    volumes:
+      - billing_db_data:/var/lib/postgresql/data
+    networks:
+      - evolution_network
+
 volumes:
   evolution_data:
   evolution_logs:
@@ -323,6 +403,7 @@ volumes:
   evocrm_storage:
   evoauth_storage:
   evocrm_processor_logs:
+  billing_db_data:
 
 networks:
   evolution_network:
