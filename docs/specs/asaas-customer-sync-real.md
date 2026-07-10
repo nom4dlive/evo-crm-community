@@ -1,6 +1,6 @@
 ---
 title: Asaas Customer Sync & Document Validation
-status: draft
+status: shipped
 primary_domain: financial
 secondary_domains: [billing, auth]
 created: 2026-07-10

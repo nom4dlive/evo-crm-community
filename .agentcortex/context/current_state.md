@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T03:29:00Z
-- **Last Verified**: 2026-07-09
-- **Update Sequence**: 21
+- **Last Updated**: 2026-07-10T04:22:00Z
+- **Last Verified**: 2026-07-10
+- **Update Sequence**: 23
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -72,6 +72,14 @@
 
 ### Ship-main-2026-07-09-financial-management-phase-1
 - Feature shipped: Fase 1 (Infraestrutura + Schema + CRUD de Planos e Assinaturas) do evo-billing-service, incluindo isolamento de tenant, autenticação JWT baseada em chaves públicas e RSpec completo (18 specs) verde.
+- Tests: Pass
+
+### Ship-main-2026-07-10-onboarding-vertical-guides
+- Feature shipped: Criados `ONBOARDING-CLINICA.md` (17.1 KB) e `ONBOARDING-ECOMMERCE.md` (16.3 KB) em `F:\Evolution-CRM\Roadmap\` — guias verticais com 10 seções cada, 8 templates copy-paste, 3 jornadas, 2 pipelines, campanhas e troubleshooting específico para clínicas/estútios e e-commerce/varejo.
+- Tests: Pass
+
+### Ship-main-2026-07-10-tenant-onboarding-guide
+- Feature shipped: Criado `F:\Evolution-CRM\Roadmap\ONBOARDING.md` (20.9 KB) — guia completo de onboarding para novos tenants com URLs reais, WhatsApp setup via Evolution API, API quick reference, 5 templates de automação, 5 templates de campanhas, 3 jornadas, 3 pipelines e 4 casos de uso prontos.
 - Tests: Pass
 
 ### Ship-main-2026-07-09-update-tenant-password
