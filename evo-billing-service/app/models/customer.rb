@@ -13,8 +13,16 @@ class Customer < ApplicationRecord
   validates :account_id,        presence: true
   validates :contact_id,        presence: true
   validates :asaas_customer_id, presence: true, uniqueness: true
-  validates :cpf_cnpj,          presence: true
+  validates :cpf_cnpj,          presence: true, format: { with: /\A\d{11}\z|\A\d{14}\z/, message: "must be a valid CPF (11 digits) or CNPJ (14 digits)" }
+
+  before_validation :normalize_cpf_cnpj
 
   # Scopes
   scope :by_contact, ->(contact_id) { where(contact_id: contact_id) }
+
+  private
+
+  def normalize_cpf_cnpj
+    self.cpf_cnpj = cpf_cnpj.to_s.gsub(/\D/, "") if cpf_cnpj.present?
+  end
 end
