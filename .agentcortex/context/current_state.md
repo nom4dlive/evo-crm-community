@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T16:33:00Z
+- **Last Updated**: 2026-07-10T18:17:00Z
 - **Last Verified**: 2026-07-10
-- **Update Sequence**: 27
+- **Update Sequence**: 29
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -27,6 +27,7 @@
   - docs/specs/asaas-billing-webhooks-homologation.md: Asaas Webhook Ingress & Idempotency Homologation · status: shipped · applies_to: evo-billing-service
   - docs/specs/asaas-customer-sync-real.md: Asaas Customer Sync & Document Validation · status: shipped · applies_to: evo-billing-service
   - docs/specs/asaas-dunning-sidekiq-homologation.md: Asaas Dunning Enforcement & Sidekiq Cron Resiliance · status: shipped · applies_to: evo-billing-service
+  - docs/specs/asaas-nfe-integration.md: Asaas NF-e Integration & Fiscal Reports · status: shipped · applies_to: evo-billing-service, evo-ai-frontend-community
   - docs/specs/financial-management.md: Financial Management Module · status: draft · applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community
   - docs/specs/stabilization.md: Environment Stabilization and Error Resolution · status: shipped · applies_to: evo-flow-community, nginx
   - docs/specs/tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · status: shipped · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -68,6 +69,14 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-main-2026-07-10-asaas-nfe-integration
+- Feature shipped: Integração de Notas Fiscais Municipais (NF-e) via Asaas (Fase 4), emissão assíncrona com retentativas no Sidekiq, endpoints de relatório fiscal superadmin e download direto no frontend. Configurado o deploy de produção no vps-docker-compose.yml.
+- Tests: Pass
+
+### Ship-main-2026-07-10-webhook-signature-verification
+- Feature shipped: Strict Webhook Signature Verification at HTTP boundary using SVIX (Gap 4). Rejects forged events with 401 Unauthorized directly at WebhooksController.
+- Tests: Pass
 
 ### Ship-feature-financial-frontend-ui-2026-07-10
 - Feature shipped: Estabilização do Frontend do Módulo Financeiro (Fase 3), corrigindo imports não utilizados do React (TS6133) que impediam a compilação do bundle de produção do Vite.
