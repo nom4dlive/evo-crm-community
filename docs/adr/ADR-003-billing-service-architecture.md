@@ -1,7 +1,7 @@
 ---
 date: 2026-07-09
 status: accepted
-applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community, docker-compose.yml, vps-docker-compose.yml, nginx
+applies_to: ["evo-billing-service/**", "evo-auth-service-community/**", "evo-ai-frontend-community/**", "docker-compose.yml", "vps-docker-compose.yml", "nginx"]
 lifecycle:
   owner: "unassigned"
   review_cadence: "on-event"
