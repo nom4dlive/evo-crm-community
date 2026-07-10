@@ -18,6 +18,9 @@ RUN bundle install --jobs 4 --retry 3
 # Application code
 COPY . .
 
+# Ensure log and tmp directories exist
+RUN mkdir -p log tmp
+
 # Bootsnap cache
 RUN bundle exec bootsnap precompile --gemfile
 

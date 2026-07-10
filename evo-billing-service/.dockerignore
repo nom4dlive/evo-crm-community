@@ -1,0 +1,4 @@
+# Empty .dockerignore to allow copying everything from build context (including bin/)
+.git
+log/
+tmp/

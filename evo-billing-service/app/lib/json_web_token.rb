@@ -6,12 +6,14 @@ module JsonWebToken
   JWT_ALGORITHM = "RS256".freeze
 
   def self.decode(token)
-    public_key_pem = ENV.fetch("EVO_AUTH_JWT_PUBLIC_KEY") do
-      raise "EVO_AUTH_JWT_PUBLIC_KEY is not set" unless Rails.env.test?
-      nil
-    end
+    public_key_pem = ENV["EVO_AUTH_JWT_PUBLIC_KEY"]
+    public_key_pem = nil if public_key_pem.to_s.strip.empty?
 
-    return decode_test_token(token) if Rails.env.test? && public_key_pem.nil?
+    if Rails.env.test? && public_key_pem.nil?
+      return decode_test_token(token)
+    elsif public_key_pem.nil?
+      raise AuthenticationError, "EVO_AUTH_JWT_PUBLIC_KEY is not set"
+    end
 
     public_key = OpenSSL::PKey::RSA.new(public_key_pem)
 

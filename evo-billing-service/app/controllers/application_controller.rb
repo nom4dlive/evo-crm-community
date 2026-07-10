@@ -8,6 +8,7 @@ class ApplicationController < ActionController::API
   rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable
   rescue_from Pundit::NotAuthorizedError, with: :render_forbidden
   rescue_from TenantContextMissing, with: :render_internal_error
+  rescue_from AuthenticationError, with: :render_unauthorized
 
   private
 
@@ -28,10 +29,16 @@ class ApplicationController < ActionController::API
            status: :forbidden
   end
 
+  def render_unauthorized(e)
+    render json: { error: "unauthorized", message: e.message }, status: :unauthorized
+  end
+
   def render_internal_error(e)
+    STDERR.puts "[ApplicationController ERROR] #{e.class}: #{e.message}"
+    STDERR.puts e.backtrace.first(15).join("\n") if e.backtrace
     Rails.logger.error "[ApplicationController] #{e.class}: #{e.message}"
     Rails.logger.error e.backtrace.first(5).join("\n") if e.backtrace
-    render json: { error: "internal_server_error", message: "An unexpected error occurred" },
+    render json: { error: "internal_server_error", message: e.message },
            status: :internal_server_error
   end
 

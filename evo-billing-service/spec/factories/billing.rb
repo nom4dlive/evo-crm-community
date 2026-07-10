@@ -43,7 +43,7 @@ FactoryBot.define do
   factory :payment do
     account_id { 1 }
     association :invoice
-    method { "pix" }
+    add_attribute(:method) { "pix" }
     status { "pending" }
     amount_cents { 4990 }
   end

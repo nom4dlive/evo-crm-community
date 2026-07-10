@@ -7,12 +7,22 @@ require "rails/test_unit/railtie"
 
 Bundler.require(*Rails.groups)
 
+# Load custom exceptions — Ref: Spec C-02
+require_relative "../app/lib/errors"
+
 module EvoBillingService
   class Application < Rails::Application
     config.load_defaults 7.1
     config.api_only = true
     config.time_zone = "UTC"
     config.active_record.default_timezone = :utc
+    config.eager_load = Rails.env.production?
+
+    # Force exceptions to bubble up in test env for diagnostic visibility
+    if Rails.env.test?
+      config.consider_all_requests_local = true
+      config.action_dispatch.show_exceptions = :none
+    end
 
     config.middleware.insert_before 0, Rack::Cors do
       allow do

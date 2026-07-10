@@ -12,8 +12,7 @@ class ApplicationRecord < ActiveRecord::Base
   # Enforce that all tenant-scoped subclasses have an account_id context.
   # Call `tenant_scoped!` in each model that requires isolation.
   def self.tenant_scoped!
-    before_create :assert_tenant_context!
-    before_update :assert_tenant_context!
+    before_validation :assert_tenant_context!
   end
 
   private
