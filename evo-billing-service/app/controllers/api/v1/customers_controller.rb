@@ -27,18 +27,49 @@ class Api::V1::CustomersController < ApplicationController
 
   # POST /api/v1/customers
   def create
-    # Sync with Asaas first
-    asaas_response = asaas_client.create_customer(
-      name:    customer_params[:name],
-      cpfCnpj: customer_params[:cpf_cnpj],
-      email:   customer_params[:email],
-      phone:   customer_params[:phone]
-    )
-
+    # Initialize customer locally first to run validations (document format, etc.)
+    # We pass a temporary asaas_customer_id to satisfy presence validation during initial check
     customer = Customer.new(customer_params.merge(
-      account_id:       Current.account_id,
-      asaas_customer_id: asaas_response["id"]
+      account_id:        Current.account_id,
+      asaas_customer_id: "temp_#{SecureRandom.hex(8)}"
     ))
+
+    unless customer.valid?
+      render json: {
+        error: "unprocessable_entity",
+        message: "Validation failed",
+        details: customer.errors.full_messages
+      }, status: :unprocessable_entity
+      return
+    end
+
+    # Sync with Asaas
+    begin
+      asaas_response = asaas_client.create_customer(
+        name:    customer_params[:name],
+        cpfCnpj: customer.cpf_cnpj, # Use the normalized document from model
+        email:   customer_params[:email],
+        phone:   customer_params[:phone]
+      )
+    rescue AsaasClient::ApiError => e
+      if e.status == 400
+        render json: {
+          error: "asaas_validation_error",
+          message: "Asaas API validation failed",
+          details: e.body&.dig("errors")
+        }, status: :unprocessable_entity
+      else
+        render json: {
+          error: "asaas_api_error",
+          message: e.message,
+          details: e.body
+        }, status: :bad_gateway
+      end
+      return
+    end
+
+    # Set real Asaas customer ID and persist to DB
+    customer.asaas_customer_id = asaas_response["id"]
 
     if customer.save
       render json: { data: customer }, status: :created
@@ -49,12 +80,6 @@ class Api::V1::CustomersController < ApplicationController
         details: customer.errors.full_messages
       }, status: :unprocessable_entity
     end
-  rescue AsaasClient::ApiError => e
-    render json: {
-      error: "asaas_api_error",
-      message: e.message,
-      details: e.body
-    }, status: :bad_gateway
   end
 
   # DELETE /api/v1/customers/:id
