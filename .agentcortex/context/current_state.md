@@ -15,15 +15,16 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T04:22:00Z
+- **Last Updated**: 2026-07-10T15:18:00Z
 - **Last Verified**: 2026-07-10
-- **Update Sequence**: 23
+- **Update Sequence**: 24
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
   - docs/adr/ADR-003-billing-service-architecture.md: Financial Management — evo-billing-service Architecture · applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community, docker-compose.yml, vps-docker-compose.yml, nginx
 - **Active Backlog**: docs/specs/_product-backlog.md
 - **Spec Index** (project specs at `docs/specs/`):
+  - docs/specs/asaas-customer-sync-real.md: Asaas Customer Sync & Document Validation · status: shipped · applies_to: evo-billing-service
   - docs/specs/financial-management.md: Financial Management Module · status: draft · applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community
   - docs/specs/stabilization.md: Environment Stabilization and Error Resolution · status: shipped · applies_to: evo-flow-community, nginx
   - docs/specs/tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · status: shipped · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -65,6 +66,10 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-feature-asaas-real-integration-2026-07-10
+- Feature shipped: Sincronização de Clientes Asaas com validação local de documentos (CPF/CNPJ com dígitos exatos de 11 e 14) e mapeamento de erros 400 da API externa para 422 locally.
+- Tests: Pass
 
 ### Ship-main-2026-07-10-financial-management-phase-2
 - Feature shipped: Fase 2 (Integração Asaas, Webhooks, Enforcamento/Grace Period e Suspensão evo-auth) do evo-billing-service. Inclui cliente Asaas, webhook seguro HMAC/idempotente, Sidekiq dunning job e endpoints internos S2S.
