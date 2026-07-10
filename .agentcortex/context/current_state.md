@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T00:05:00Z
+- **Last Updated**: 2026-07-10T00:17:00Z
 - **Last Verified**: 2026-07-09
-- **Update Sequence**: 16
+- **Update Sequence**: 17
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -36,10 +36,10 @@
   - `/decide`: Record key decisions with reasoning to prevent cross-session re-derivation.
   - `/test-classify`: Auto-select test depth and evidence format based on task classification.
   - `/ship`: Consolidate evidence and update/archive state.
-  - `ask-openrouter`: [OPTIONAL] External model delegation. See `.agent/workflows/ask-openrouter.md`.
-  - `codex-cli`: [OPTIONAL] Codex CLI delegation. See `.agent/workflows/codex-cli.md`.
-  - `claude-cli`: [OPTIONAL] Claude CLI delegation. See `.agent/workflows/claude-cli.md`.
-  - `ask-local`: [OPTIONAL] Local-model (OpenAI-compatible endpoint) delegation. See `.agent/workflows/ask-local.md`.
+  - 'ask-openrouter': [OPTIONAL] External model delegation. See `.agent/workflows/ask-openrouter.md`.
+  - 'codex-cli': [OPTIONAL] Codex CLI delegation. See `.agent/workflows/codex-cli.md`.
+  - 'claude-cli': [OPTIONAL] Claude CLI delegation. See `.agent/workflows/claude-cli.md`.
+  - 'ask-local': [OPTIONAL] Local-model (OpenAI-compatible endpoint) delegation. See `.agent/workflows/ask-local.md`.
 - **References**:
   - `AGENTS.md`
   - `.agent/rules/engineering_guardrails.md`
@@ -63,6 +63,10 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-main-2026-07-09-create-beta-tenant
+- Feature shipped: Provisioned Tiago_Araujo tenant and tiagoaraujoarq@gmail.com user on production VPS to act as beta tester.
+- Tests: Pass
 
 ### Ship-main-2026-07-09-support-email-and-evo-flow-s2s
 - Feature shipped: Fixed Account support_email store_accessor and exposed it in to_dict, configured AUTH_APIKEY_INTEGRATION_LOCAL env var in evo-flow service to allow s2s auth.
