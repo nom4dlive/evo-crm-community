@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-11T01:36:00Z
+- **Last Updated**: 2026-07-11T02:48:00Z
 - **Last Verified**: 2026-07-11
-- **Update Sequence**: 31
+- **Update Sequence**: 32
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -28,7 +28,7 @@
   - docs/specs/asaas-customer-sync-real.md: Asaas Customer Sync & Document Validation · status: shipped · applies_to: evo-billing-service
   - docs/specs/asaas-dunning-sidekiq-homologation.md: Asaas Dunning Enforcement & Sidekiq Cron Resiliance · status: shipped · applies_to: evo-billing-service
   - docs/specs/asaas-nfe-integration.md: Asaas NF-e Integration & Fiscal Reports · status: shipped · applies_to: evo-billing-service, evo-ai-frontend-community
-  - docs/specs/financial-management.md: Financial Management Module · status: draft · applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community
+  - docs/specs/financial-management.md: Financial Management Module · status: shipped · applies_to: evo-billing-service, evo-auth-service-community, evo-ai-frontend-community
   - docs/specs/stabilization.md: Environment Stabilization and Error Resolution · status: shipped · applies_to: evo-flow-community, nginx
   - docs/specs/tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · status: shipped · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
 - **Canonical Commands**:
@@ -69,6 +69,10 @@
 
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
+
+### Ship-feature-financial-frontend-gold-upgrades-2026-07-11
+- Feature shipped: Elevação de qualidade visual e funcional (nível ouro) do painel de gestão financeira do Evo CRM (Superadmin e Inquilino) com sparklines de tendência em KPIs glassmórficos, gráficos de análise unificados em abas (área de faturamento, rosca de meios de pagamento e colunas fiscais), tabelas premium com iniciais dos contatos em gradiente, badges ricos de Pix/Cartão/Boleto, velocímetros circulares de consumo de limites e gaveta (Timeline Drawer) lateral com auditoria de webhooks em tempo real e links reais Asaas.
+- Tests: Pass
 
 ### Ship-quick-win-financial-ui-fixes-2026-07-11
 - Feature shipped: Integração dos botões de navegação no menu lateral para todas as telas financeiras (Minha Assinatura, Faturas, Cobranças, Dashboard Global, Planos e Assinaturas Globais) com controle de privilégio do superadmin. Corrigido erro Uncaught TypeError/filter em listas sem dados recebidos.
