@@ -15,9 +15,9 @@
   - Task Isolation: `.agentcortex/context/work/<worklog-key>.md`
   - Active Work Log Path: derive <worklog-key> from the raw branch name using filesystem-safe normalization before any gate checks.
   - Workflows & Policies: `.agent/workflows/*.md`, `.agent/rules/*.md`
-- **Last Updated**: 2026-07-10T18:17:00Z
-- **Last Verified**: 2026-07-10
-- **Update Sequence**: 29
+- **Last Updated**: 2026-07-11T01:36:00Z
+- **Last Verified**: 2026-07-11
+- **Update Sequence**: 31
 - **ADR Index**: 
   - docs/adr/ADR-001-tenant-routing.md: Custom Domain and Subdomain Routing · applies_to: evo-auth-service-community, nginx
   - docs/adr/ADR-002-tenant-isolation-auth.md: Multi-Tenant Scoping and Security Isolation · applies_to: evo-auth-service-community, evo-ai-core-service-community, evo-ai-processor-community
@@ -70,6 +70,14 @@
 - [Category: rails-exceptions][Severity: HIGH][Trigger: rescue_from StandardError][prev: GENESIS] Always place the catch-all rescue_from StandardError handler at the very top of the controller file, as Rails checks handlers in reverse order of definition.
 ## Ship History
 
+### Ship-quick-win-financial-ui-fixes-2026-07-11
+- Feature shipped: Integração dos botões de navegação no menu lateral para todas as telas financeiras (Minha Assinatura, Faturas, Cobranças, Dashboard Global, Planos e Assinaturas Globais) com controle de privilégio do superadmin. Corrigido erro Uncaught TypeError/filter em listas sem dados recebidos.
+- Tests: Pass
+
+### Ship-feature-financial-nfe-integration-2026-07-10
+- Feature shipped: Homologação e ativação dos testes E2E do gateway Asaas na VPS. Registrado o webhook de ingress com token dinâmico `whsec_...` e garantido sincronismo de submodules locais com a VPS.
+- Tests: Pass
+
 ### Ship-main-2026-07-10-asaas-nfe-integration
 - Feature shipped: Integração de Notas Fiscais Municipais (NF-e) via Asaas (Fase 4), emissão assíncrona com retentativas no Sidekiq, endpoints de relatório fiscal superadmin e download direto no frontend. Configurado o deploy de produção no vps-docker-compose.yml.
 - Tests: Pass
@@ -104,70 +112,6 @@
 
 ### Ship-main-2026-07-10-onboarding-vertical-guides
 - Feature shipped: Criados `ONBOARDING-CLINICA.md` (17.1 KB) e `ONBOARDING-ECOMMERCE.md` (16.3 KB) em `F:\Evolution-CRM\Roadmap\` — guias verticais com 10 seções cada, 8 templates copy-paste, 3 jornadas, 2 pipelines, campanhas e troubleshooting específico para clínicas/estútios e e-commerce/varejo.
-- Tests: Pass
-
-### Ship-main-2026-07-10-tenant-onboarding-guide
-- Feature shipped: Criado `F:\Evolution-CRM\Roadmap\ONBOARDING.md` (20.9 KB) — guia completo de onboarding para novos tenants com URLs reais, WhatsApp setup via Evolution API, API quick reference, 5 templates de automação, 5 templates de campanhas, 3 jornadas, 3 pipelines e 4 casos de uso prontos.
-- Tests: Pass
-
-### Ship-main-2026-07-09-update-tenant-password
-- Feature shipped: Atualização de senha do usuário tiagoaraujoarq@gmail.com (tenant Tiago_Araujo) no VPS de produção. Nova senha: `Araujo@2026!`. Rails runner confirmou `Password updated successfully: true`.
-- Tests: Pass
-
-### Ship-main-2026-07-09-create-beta-tenant
-- Feature shipped: Provisioned Tiago_Araujo tenant and tiagoaraujoarq@gmail.com user on production VPS to act as beta tester.
-- Tests: Pass
-
-### Ship-main-2026-07-09-support-email-and-evo-flow-s2s
-- Feature shipped: Fixed Account support_email store_accessor and exposed it in to_dict, configured AUTH_APIKEY_INTEGRATION_LOCAL env var in evo-flow service to allow s2s auth.
-- Tests: Pass
-
-### Ship-main-2026-07-09-multi-tenant-isolation-scoping
-- Feature shipped: Scoped custom roles by Current.account_id and fixed rescue_from StandardError precedence in Api::BaseController.
-- Tests: Pass
-
-### Ship-main-2026-07-09-hermes-e2e-roles
-- Feature shipped: Resolved roles (inboxes) tenant isolation gap in evo-auth service by adding account_id to roles table, applying dynamic default scope, and fixing exception handling precedence.
-- Tests: Pass
-
-### Ship-main-2026-07-09-hermes-e2e
-- Feature shipped: End-to-end API-level Playwright tests created and verified for account, user, contact, and inbox tenant isolation on the Podman Desktop container stack.
-- Tests: Pass
-
-### Ship-main-2026-07-09-tenant-isolation
-- Feature shipped: Fixed the multi-tenant isolation leak in Auth API where `StandardError` blocked `RecordNotFound` exceptions, and enforced strict TDD isolation checks across both evo-auth and evo-crm services.
-- Tests: Pass
-
-### Ship-main-2026-07-09-testes-vps
-- Feature shipped: Validated real tests on VPS for Tenant isolation. Bootstrapped testevps tenant via SSH script, generated JWT from evo-auth, and successfully routed and validated tenant isolation on both CRM (Go) and Processor (Python) endpoints via Traefik/Nginx.
-- Tests: Pass
-
-### Ship-main-2026-07-08-random-tenant-provisioning
-- Feature shipped: Interactively provisioned a new random tenant (`tenant-4829`) on the VPS environment and verified database schema insertion (Account and User tables) and successful OAuth2 login auth handshake with HTTP 200 OK.
-- Tests: Pass
-
-### Ship-main-2026-07-08-remediation
-- Feature shipped: Resolved all multi-tenant isolation database schema and middleware gaps in the community build of the Go core service (activated CommunityTenantPlugin and declared tenant_id column) and Python processor service (added tenant_id column via Alembic migration). Fixed Redis SSL connection parameter mismatch and EvoAuth exception handler request parameters. Verified 17/17 integration tests passing successfully on the VPS.
-- Tests: Pass
-
-### Ship-main-2026-07-08-api-fixes
-- Feature shipped: Resolved the database migration timestamp collision by renaming `20260706200000_add_account_id_to_core_tables.rb` to `20260706200005_add_account_id_to_core_tables.rb` in `evo-crm` submodule, and fixed setup_tenant.rb and bin/create-tenant.sh to confirm users and search roles by their exact keys.
-- Tests: Pass
-
-### Ship-main-2026-07-08
-- Feature shipped: Resolved immediate governance issues by referencing the routing index and adding safety-floor comment markers in `AGENTS.md`, and adding YAML frontmatter status to `docs/specs/tenant-isolation-auth.md`. Also marked completed backlog items (ADR frontmatter, routing index reference, spec status, safety markers) as Shipped.
-- Tests: Pass
-
-### Ship-main-2026-07-08-multi-tenant-security
-- Feature shipped: Scoping and stamping tenant context across Rails (evo-auth), Go (evo-core), and Python (evo-processor). Updated UserSerializer, AgentBuilder, Gin/GORM community scoping plugin, and FastAPI/SQLAlchemy event listeners. Verified via Rails request specs and rebuilt microservices images on VPS.
-- Tests: Pass
-
-### Ship-main-2026-07-07-tenant-helper
-- Feature shipped: Criação do assistente bin/create-tenant.sh e testes de validação TDD, ajustado para target do container evo-auth.
-- Tests: Pass
-
-### Ship-main-2026-07-07
-- Feature shipped: Injeção de variáveis de ambiente do EvoFlow client na VPS, resolvendo o erro 500 no endpoint de segmentos do Rails CRM.
 - Tests: Pass
 
 - **2026-07-07**: Deploy do serviço evo-flow (NestJS) na VPS, correção do Nginx gateway (upstream flow_service para jornadas/campanhas), resolução dos conflitos de porta do Traefik, e criação da documentação de Single Source of Truth (MULTI_TENANT_MAP.md, DESCOBERTAS_CONSOLIDADAS.md, DEPLOYMENT_GUIDE.md).
